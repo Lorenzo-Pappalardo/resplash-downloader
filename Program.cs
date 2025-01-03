@@ -8,7 +8,7 @@ var httpClient = new HttpClient() { };
 
 app.MapGet("/", () => "Hello World!");
 
-app.MapPost("/download", async (string[] urls) =>
+app.MapPost("/download", async (string[] urls, CancellationToken token) =>
 {
   var regex = new Regex(@"^https:\/\/images\.unsplash\.com\/photo-\w+-\w+\?");
   var filtered = urls.Where(url => regex.Match(url).Success);
@@ -35,9 +35,36 @@ app.MapPost("/download", async (string[] urls) =>
       fastZip.CreateZip($"{basePath}.zip", $"{basePath}/", true, null);
 
       Directory.Delete(basePath, true);
+
+      return randomName;
     }
   }
   catch { }
+
+  return null;
+});
+
+app.MapGet("/download/{id}", async (HttpContext context) =>
+{
+  if (!context.Request.RouteValues.TryGetValue("id", out var id))
+  {
+    return Results.BadRequest();
+  }
+
+  var filePath = $"downloaded/{id}.zip";
+
+  if (File.Exists(filePath))
+  {
+    var fileBytes = await File.ReadAllBytesAsync(filePath);
+    File.Delete(filePath);
+
+    context.Response.Headers.Add("Content-Disposition", $"attachment; filename={id}.zip");
+
+    return TypedResults
+      .File(fileBytes, "application/zip", $"{id}.zip");
+  }
+
+  return TypedResults.NotFound();
 });
 
 app.Run();
