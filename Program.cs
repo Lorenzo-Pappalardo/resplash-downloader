@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using ICSharpCode.SharpZipLib.Zip;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -16,6 +17,7 @@ app.MapPost("/download", async (string[] urls) =>
   {
     var photosByteArrays = await Task.WhenAll(filtered.Select(async url => await httpClient.GetByteArrayAsync(url)));
     var randomName = RandomNumberGenerator.GetHexString(10);
+    var basePath = $"downloaded/{randomName}";
 
     if (photosByteArrays != null)
     {
@@ -23,12 +25,16 @@ app.MapPost("/download", async (string[] urls) =>
       {
         if (photosByteArrays[i] != null)
         {
-          var basePath = $"downloaded/{randomName}";
           Directory.CreateDirectory(basePath);
 
           await File.WriteAllBytesAsync($"{basePath}/photo{i}.jpeg", photosByteArrays[i]);
         }
       }
+
+      var fastZip = new FastZip();
+      fastZip.CreateZip($"{basePath}.zip", $"{basePath}/", true, null);
+
+      Directory.Delete(basePath, true);
     }
   }
   catch { }
