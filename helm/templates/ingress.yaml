@@ -2,12 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.ingressRule.name }}
+annotations:
+  ingress.kubernetes.io/rewrite-target: /$1
 spec:
   ingressClassName: nginx
   rules:
   - http:
       paths:
-      - path: /downloader
+      - path: /downloader/(.*)
         pathType: Prefix
         backend:
           service:
