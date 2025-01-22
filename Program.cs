@@ -10,6 +10,8 @@ app.MapGet("/", () => "Hello World!");
 
 app.MapPost("/download", async (string[] urls, CancellationToken token) =>
 {
+  Console.WriteLine("Received POST /download request");
+
   var regex = new Regex(@"^https:\/\/images\.unsplash\.com\/photo-\w+-\w+\?");
   var filtered = urls.Where(url => regex.Match(url).Success);
 
@@ -46,6 +48,8 @@ app.MapPost("/download", async (string[] urls, CancellationToken token) =>
 
 app.MapGet("/download/{id}", async (HttpContext context) =>
 {
+  Console.WriteLine("Received GET /download/{id} request");
+
   if (!context.Request.RouteValues.TryGetValue("id", out var id))
   {
     return Results.BadRequest();
